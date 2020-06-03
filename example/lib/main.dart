@@ -25,8 +25,8 @@ class HomePage extends StatefulWidget {
 
 class _HomeState extends State<HomePage> {
   final viewId = <int>[];
-  final String apiKey = 'f81490c5-fd59-4af8-903f-fb4d35801ef5';
-  final String domain = 'sodai.wasecoma.io';
+  final String apiKey = 'apikey';
+  final String domain = 'domain';
   String status = '';
   bool isConnecting = false;
   SkywayPeer peer;
