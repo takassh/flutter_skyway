@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/flutter_skyway.iml" filepath="$PROJECT_DIR$/flutter_skyway.iml" group="flutter_skyway" />
+      <module fileurl="file://$PROJECT_DIR$/skyway/skyway.iml" filepath="$PROJECT_DIR$/skyway/skyway.iml" group="flutter_skyway/skyway" />
+    </modules>
+  </component>
+</project>

@@ -1,0 +1,35 @@
+PODS:
+  - Flutter (1.0.0)
+  - flutter_skyway (0.0.1):
+    - Flutter
+    - SkyWay
+  - "permission_handler (5.0.0+hotfix.8)":
+    - Flutter
+  - SkyWay (1.0.6)
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - flutter_skyway (from `.symlinks/plugins/flutter_skyway/ios`)
+  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+
+SPEC REPOS:
+  trunk:
+    - SkyWay
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  flutter_skyway:
+    :path: ".symlinks/plugins/flutter_skyway/ios"
+  permission_handler:
+    :path: ".symlinks/plugins/permission_handler/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  flutter_skyway: 25e1a686ef0f42136d6b14f4388e0659599db560
+  permission_handler: c2a19c5cb3ed2d7054fc4baa8ff1b86f5dcfedfd
+  SkyWay: d65c26ff87d9081918a6ec1c18f3305f450bd18c
+
+PODFILE CHECKSUM: 9cf8ee21893cd239dcc3920fd1d78a3214ef92b2
+
+COCOAPODS: 1.8.4
