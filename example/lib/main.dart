@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_skyway/flutter_skyway.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 void main() => runApp(MyApp());
 
@@ -25,7 +22,7 @@ class HomePage extends StatefulWidget {
 
 class _HomeState extends State<HomePage> {
   final viewId = <int>[];
-  final String apiKey = 'apikey';
+  final String apiKey = 'apiKey';
   final String domain = 'domain';
   String status = '';
   bool isConnecting = false;
@@ -163,21 +160,9 @@ class _HomeState extends State<HomePage> {
                       ? Column(
                           children: <Widget>[
                             SizedBox(
-                              child: Platform.isIOS
-                                  ? UiKitView(
-                                      viewType: 'flutter_skyway/video_view/' +
-                                          peer.peerId,
-                                      onPlatformViewCreated: (id) {
-                                        print('AndroidView created: id = $id');
-                                      },
-                                    )
-                                  : AndroidView(
-                                      viewType: 'flutter_skyway/video_view/' +
-                                          peer.peerId,
-                                      onPlatformViewCreated: (id) {
-                                        print('AndroidView created: id = $id');
-                                      },
-                                    ),
+                              child: SkyWayLocalView(
+                                ownPeerId: peer.peerId,
+                              ),
                               width: 320.0,
                               height: 240.0,
                             ),
@@ -193,91 +178,10 @@ class _HomeState extends State<HomePage> {
                                 SizedBox(
                                   child: Hero(
                                     tag: 'view',
-                                    child: Platform.isIOS
-                                        ? VisibilityDetector(
-                                            key: Key(
-                                                'visible-video--key-${0}-1'),
-                                            child: UiKitView(
-                                              viewType:
-                                                  'flutter_skyway/video_view/' +
-                                                      e,
-                                              onPlatformViewCreated: (id) {
-                                                areVisible.addAll({e: false});
-                                                print(
-                                                    'UiKitView created: id = $id');
-                                              },
-                                            ),
-                                            onVisibilityChanged:
-                                                (visibilityInfo) {
-                                              var visiblePercentage =
-                                                  visibilityInfo
-                                                          .visibleFraction *
-                                                      100;
-
-                                              if (visibilityInfo
-                                                      .visibleFraction !=
-                                                  0.0) {
-                                                if (visiblePercentage < 30) {
-                                                  if (areVisible[e]) {
-                                                    setState(() {
-                                                      areVisible[e] = false;
-                                                    });
-                                                  }
-                                                } else {
-                                                  if (!areVisible[e]) {
-                                                    setState(() {
-                                                      areVisible[e] = true;
-                                                    });
-
-                                                    print(visiblePercentage);
-                                                    peer.afterPlatformViewWaitingAction(
-                                                        e, false);
-                                                  }
-                                                }
-                                              }
-                                            })
-                                        : VisibilityDetector(
-                                            key: Key(
-                                                'visible-video--key-${0}-1'),
-                                            child: AndroidView(
-                                              viewType:
-                                                  'flutter_skyway/video_view/' +
-                                                      e,
-                                              onPlatformViewCreated: (id) {
-                                                areVisible.addAll({e: false});
-                                                print(
-                                                    'UiKitView created: id = $id');
-                                              },
-                                            ),
-                                            onVisibilityChanged:
-                                                (visibilityInfo) {
-                                              var visiblePercentage =
-                                                  visibilityInfo
-                                                          .visibleFraction *
-                                                      100;
-
-                                              if (visibilityInfo
-                                                      .visibleFraction !=
-                                                  0.0) {
-                                                if (visiblePercentage < 30) {
-                                                  if (areVisible[e]) {
-                                                    setState(() {
-                                                      areVisible[e] = false;
-                                                    });
-                                                  }
-                                                } else {
-                                                  if (!areVisible[e]) {
-                                                    setState(() {
-                                                      areVisible[e] = true;
-                                                    });
-
-                                                    print(visiblePercentage);
-                                                    peer.afterPlatformViewWaitingAction(
-                                                        e, false);
-                                                  }
-                                                }
-                                              }
-                                            }),
+                                    child: SkyWayRemoteView(
+                                      peer: peer,
+                                      peerId: e,
+                                    ),
                                   ),
                                   width: 320.0,
                                   height: 240.0,
@@ -294,55 +198,40 @@ class _HomeState extends State<HomePage> {
     );
   }
 
-  Future<bool> requestPermission() async {
-    if (Platform.isAndroid) {
-      return true;
-    } else {
-      if ((await Permission.camera.request().isGranted) &&
-          (await Permission.microphone.request().isGranted)) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
-
   Future<void> _connect() async {
-    if (await requestPermission()) {
-      if (isConnecting) {
-        return;
-      }
-
-      setState(() {
-        this.isConnecting = true;
-        this.status = 'Connecting...';
-      });
-
-      String status;
-      SkywayPeer peer;
-
-      try {
-        status = 'Connected!';
-        peer = await Skyway.connect(apiKey, domain);
-        peer.onReceiveRoomOpenCallback = _onReceiveRoomOpenCallback;
-        peer.onReceiveRoomCloseCallback = _onReceiveRoomCloseCallback;
-        peer.onReceiveRoomErrorCallback = _onReceiveRoomErrorCallback;
-        peer.onReceiveRoomJoinCallback = _onReceiveRoomJoinCallback;
-        peer.onReceiveRoomLeaveCallback = _onReceiveRoomLeaveCallback;
-        peer.onReceiveRoomStreamCallback = _onReceiveRoomStreamCallback;
-        peer.onReceiveRoomRemoveStreamCallback =
-            _onReceiveRoomRemoveStreamCallback;
-      } on PlatformException catch (e) {
-        print(e);
-        status = 'Failed to connect.';
-      }
-
-      setState(() {
-        this.isConnecting = false;
-        this.status = status;
-        this.peer = peer;
-      });
+    if (isConnecting) {
+      return;
     }
+
+    setState(() {
+      this.isConnecting = true;
+      this.status = 'Connecting...';
+    });
+
+    String status;
+    SkywayPeer peer;
+
+    try {
+      status = 'Connected!';
+      peer = await Skyway.connect(apiKey, domain);
+      peer.onReceiveRoomOpenCallback = _onReceiveRoomOpenCallback;
+      peer.onReceiveRoomCloseCallback = _onReceiveRoomCloseCallback;
+      peer.onReceiveRoomErrorCallback = _onReceiveRoomErrorCallback;
+      peer.onReceiveRoomJoinCallback = _onReceiveRoomJoinCallback;
+      peer.onReceiveRoomLeaveCallback = _onReceiveRoomLeaveCallback;
+      peer.onReceiveRoomStreamCallback = _onReceiveRoomStreamCallback;
+      peer.onReceiveRoomRemoveStreamCallback =
+          _onReceiveRoomRemoveStreamCallback;
+    } on PlatformException catch (e) {
+      print(e);
+      status = 'Failed to connect.';
+    }
+
+    setState(() {
+      this.isConnecting = false;
+      this.status = status;
+      this.peer = peer;
+    });
   }
 
   void _onReceiveRoomOpenCallback(String roomName) {

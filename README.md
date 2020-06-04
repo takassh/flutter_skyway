@@ -1,14 +1,26 @@
-# flutter_skyway
+# Flutter_skyway
 
-A new flutter plugin project.
+NTTコミュニケーションズが公開している[skyway](https://webrtc.ecl.ntt.com/)をflutter向けに対応させたものです。現状SFUにのみ対応しています。使う時は、apikeyとdomainを設定してください。
 
 ## Getting Started
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
+```
+dependencies:
+  ...
+  tag_rich_text:
+    git:
+      url: git://github.com/appKASAI/flutter_tag_rich_text.git
+      ref: master
+```
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+
+
+## Usage example
+
+Import `tag_rich_text.dart`
+
+```
+import 'package:tag_rich_text.dart/tag_rich_text.dart.dart';
+```
+
+

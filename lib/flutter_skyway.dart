@@ -1,17 +1,38 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-final MethodChannel _channel = const MethodChannel('flutter_skyway');
+const _channel = MethodChannel('flutter_skyway');
 
 class Skyway {
   static Future<SkywayPeer> connect(String apiKey, String domain) async {
-    final String peerId = await _channel.invokeMethod('connectAction', {
-      'apiKey': apiKey,
-      'domain': domain,
-    });
-    print('peerId: $peerId');
-    return SkywayPeer(peerId: peerId)..initialize();
+    if (await requestPermission()) {
+      final peerId = await _channel.invokeMethod('connectAction', {
+        'apiKey': apiKey,
+        'domain': domain,
+      });
+      print('peerId: $peerId');
+      return SkywayPeer(peerId: peerId)..initialize();
+    } else {
+      return null;
+    }
+  }
+
+  static Future<bool> requestPermission() async {
+    if (Platform.isAndroid) {
+      return true;
+    } else {
+      if ((await Permission.camera.request().isGranted) &&
+          (await Permission.microphone.request().isGranted)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 }
 
@@ -24,9 +45,9 @@ typedef ReceiveRoomStreamCallback = void Function(String peerId);
 typedef ReceiveRoomRemoveStreamCallback = void Function(String peerId);
 
 class SkywayPeer {
-  final String peerId;
-
   SkywayPeer({this.peerId});
+
+  final String peerId;
 
   /// if you join room. return roomName.
   ReceiveRoomOpenCallback onReceiveRoomOpenCallback;
@@ -108,38 +129,38 @@ class SkywayPeer {
 
   /// Join room with your roomName. If success true is returned.
   Future<bool> joinRoomAction(String roomName) async {
-    return await _channel.invokeMethod('joinRoomAction', {
+    return _channel.invokeMethod('joinRoomAction', {
       'roomName': roomName,
     });
   }
 
   /// Leave room. If success true is returned.
   Future<bool> leaveRoomAction(String roomName) async {
-    return await _channel.invokeMethod('leaveRoomAction');
+    return _channel.invokeMethod('leaveRoomAction');
   }
 
   /// Switch your Camera (front or back). If success true is returned.
   Future<bool> switchCameraAction() async {
-    return await _channel.invokeMethod('switchCameraAction');
+    return _channel.invokeMethod('switchCameraAction');
   }
 
   /// Switch your Audio . If true, your Audio is listened
   Future<bool> enableAudioAction(bool isEnable) async {
-    return await _channel.invokeMethod('enableAudioAction', {
+    return _channel.invokeMethod('enableAudioAction', {
       'isEnable': isEnable,
     });
   }
 
   /// Switch your Video . If true, your Video is listened
   Future<bool> enableVideoAction(bool isEnable) async {
-    return await _channel.invokeMethod('enableVideoAction', {
+    return _channel.invokeMethod('enableVideoAction', {
       'isEnable': isEnable,
     });
   }
 
   /// return peerId
   Future<String> showOtherVideoAction(String peerId, bool isEnable) async {
-    return await _channel.invokeMethod('showOtherVideoAction', {
+    return _channel.invokeMethod('showOtherVideoAction', {
       'peerId': peerId,
       'isEnable': isEnable,
     });
@@ -147,30 +168,150 @@ class SkywayPeer {
 
   /// return all peerId except you
   Future<List<String>> getAllPeerIdAction() async {
-    return await _channel.invokeMethod('getAllPeerIdAction');
+    return _channel.invokeMethod('getAllPeerIdAction');
   }
 
   /// return showing peerId except you
   Future<List<String>> getShowingPeerIdsAction() async {
-    return await _channel.invokeMethod('getShowingPeerIdsAction');
+    return _channel.invokeMethod('getShowingPeerIdsAction');
   }
 
   /// if success return true
   Future<bool> destroyPeerAction() async {
-    return await _channel.invokeMethod('destroyPeerAction');
+    return _channel.invokeMethod('destroyPeerAction');
   }
 
   /// if success return true
   Future<bool> afterPlatformViewWaitingAction(
       String peerId, bool isMine) async {
-    return await _channel.invokeMethod(
+    return _channel.invokeMethod(
         'afterPlatformViewWaitingAction', {'peerId': peerId, 'isMine': isMine});
   }
 
   /// if success return true
   Future<bool> changeSpeakerAction(bool isSpeaker) async {
-    return await _channel.invokeMethod('changeSpeakerAction', {
+    return _channel.invokeMethod('changeSpeakerAction', {
       'isSpeaker': isSpeaker,
     });
+  }
+}
+
+class SkyWayLocalView extends StatelessWidget {
+  const SkyWayLocalView({Key key, this.ownPeerId}) : super(key: key);
+
+  final String ownPeerId;
+
+  @override
+  Widget build(BuildContext context) {
+    if (ownPeerId != '') {
+      if (Platform.isIOS) {
+        return UiKitView(
+          viewType: 'flutter_skyway/video_view/$ownPeerId',
+          onPlatformViewCreated: (id) {
+            print('AndroidView created: id = $id');
+          },
+        );
+      } else {
+        return AndroidView(
+          viewType: 'flutter_skyway/video_view/$ownPeerId',
+          onPlatformViewCreated: (id) {
+            print('AndroidView created: id = $id');
+          },
+        );
+      }
+    } else {
+      return const SizedBox();
+    }
+  }
+}
+
+class SkyWayRemoteView extends StatefulWidget {
+  const SkyWayRemoteView({Key key, this.peer, this.peerId}) : super(key: key);
+
+  final SkywayPeer peer;
+  final String peerId;
+  @override
+  State<StatefulWidget> createState() => _SkyWayRemoteViewState();
+}
+
+class _SkyWayRemoteViewState extends State<SkyWayRemoteView> {
+  bool isVisible;
+
+  @override
+  void initState() {
+    isVisible = false;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (Platform.isIOS) {
+      return VisibilityDetector(
+        key: Key(widget.peerId),
+        child: UiKitView(
+          viewType: 'flutter_skyway/video_view/${widget.peerId}',
+          onPlatformViewCreated: (id) {
+            isVisible = false;
+            print('UiKitView created: id = $id');
+          },
+        ),
+        onVisibilityChanged: (visibilityInfo) {
+          final visiblePercentage = visibilityInfo.visibleFraction * 100;
+
+          if (visibilityInfo.visibleFraction != 0.0) {
+            if (visiblePercentage < 30) {
+              if (isVisible) {
+                setState(() {
+                  isVisible = false;
+                });
+              }
+            } else {
+              if (!isVisible) {
+                setState(() {
+                  isVisible = true;
+                });
+
+                print(visiblePercentage);
+                widget.peer
+                    .afterPlatformViewWaitingAction(widget.peerId, false);
+              }
+            }
+          }
+        },
+      );
+    } else {
+      return VisibilityDetector(
+          key: Key(widget.peerId),
+          child: AndroidView(
+            viewType: 'flutter_skyway/video_view/${widget.peerId}',
+            onPlatformViewCreated: (id) {
+              isVisible = false;
+              print('UiKitView created: id = $id');
+            },
+          ),
+          onVisibilityChanged: (visibilityInfo) {
+            final visiblePercentage = visibilityInfo.visibleFraction * 100;
+
+            if (visibilityInfo.visibleFraction != 0.0) {
+              if (visiblePercentage < 30) {
+                if (isVisible) {
+                  setState(() {
+                    isVisible = false;
+                  });
+                }
+              } else {
+                if (!isVisible) {
+                  setState(() {
+                    isVisible = true;
+                  });
+
+                  print(visiblePercentage);
+                  widget.peer
+                      .afterPlatformViewWaitingAction(widget.peerId, false);
+                }
+              }
+            }
+          });
+    }
   }
 }
