@@ -1,15 +1,15 @@
 # Flutter_skyway
 
-NTTコミュニケーションズが公開している[skyway](https://webrtc.ecl.ntt.com/)をflutter向けに対応させたものです。現状SFUにのみ対応しています。使う時は、apikeyとdomainを設定してください。
+NTTコミュニケーションズが公開している[skyway](https://webrtc.ecl.ntt.com/)をflutter向けに対応させたものです。現状SFUにのみ対応しています。使う時は、apikeyとdomainを設定してください。permissionを設定するのも忘れないでください。
 
 ## Getting Started
 
 ```
 dependencies:
   ...
-  tag_rich_text:
+  flutter_skyway:
     git:
-      url: git://github.com/appKASAI/flutter_tag_rich_text.git
+      url: git://github.com/appKASAI/flutter_skyway.git
       ref: master
 ```
 
@@ -17,10 +17,10 @@ dependencies:
 
 ## Usage example
 
-Import `tag_rich_text.dart`
+Import flutter_skyway.dart
 
 ```
-import 'package:tag_rich_text.dart/tag_rich_text.dart.dart';
+import 'package:flutter_skyway/flutter_skyway.dart';
 ```
 
 
